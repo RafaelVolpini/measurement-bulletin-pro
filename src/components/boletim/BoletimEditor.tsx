@@ -7,21 +7,23 @@ import { ColumnEditor } from '@/components/boletim/ColumnEditor';
 import { ItemsEditor } from '@/components/boletim/ItemsEditor';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   FileDown, 
   Maximize2, 
   Minimize2, 
   Settings, 
   Eye,
-  FileText
+  FileText,
+  PanelLeftClose,
+  PanelLeft
 } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 
 export function BoletimEditor() {
   const [data, setData] = useState<BoletimData>(mockBoletimData);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'preview' | 'config'>('preview');
+  const [showPreview, setShowPreview] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const pdfRef = useRef<HTMLDivElement>(null);
 
@@ -104,81 +106,132 @@ export function BoletimEditor() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b shrink-0">
+        <div className="px-4 lg:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
+            <div className="h-9 w-9 bg-primary rounded-lg flex items-center justify-center">
               <FileText className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">Boletim de Medição</h1>
-              <p className="text-sm text-muted-foreground">Editor Configurável</p>
+              <h1 className="text-lg font-bold">Boletim de Medição</h1>
+              <p className="text-xs text-muted-foreground hidden sm:block">Editor Configurável</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Button variant="outline" onClick={toggleFullscreen}>
-              <Maximize2 className="h-4 w-4 mr-2" />
-              Tela Cheia
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowPreview(!showPreview)}
+              className="hidden lg:flex"
+            >
+              {showPreview ? <PanelLeftClose className="h-4 w-4 mr-2" /> : <PanelLeft className="h-4 w-4 mr-2" />}
+              {showPreview ? 'Ocultar Preview' : 'Mostrar Preview'}
             </Button>
-            <Button onClick={exportToPDF} disabled={isExporting}>
-              <FileDown className="h-4 w-4 mr-2" />
-              {isExporting ? 'Exportando...' : 'Exportar PDF'}
+            <Button variant="outline" size="sm" onClick={toggleFullscreen}>
+              <Maximize2 className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Tela Cheia</span>
+            </Button>
+            <Button size="sm" onClick={exportToPDF} disabled={isExporting}>
+              <FileDown className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">{isExporting ? 'Exportando...' : 'Exportar PDF'}</span>
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'preview' | 'config')}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="preview" className="flex items-center gap-2">
-              <Eye className="h-4 w-4" />
-              Visualização
-            </TabsTrigger>
-            <TabsTrigger value="config" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Configurações
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="preview" className="space-y-6">
-            <div className="flex justify-center">
-              <div ref={!isFullscreen ? pdfRef : undefined} className="shadow-xl border rounded-lg overflow-hidden">
-                <BoletimPDF data={data} />
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="config" className="space-y-6">
-            <div className="grid lg:grid-cols-2 gap-6">
-              <div className="space-y-6">
+      {/* Main Content - Split View */}
+      <main className="flex-1 flex overflow-hidden">
+        {/* Config Panel */}
+        <div className={`flex-1 flex flex-col overflow-hidden ${showPreview ? 'lg:max-w-[55%] xl:max-w-[50%]' : ''}`}>
+          <ScrollArea className="flex-1">
+            <div className="p-4 lg:p-6 space-y-4">
+              {/* Config Cards */}
+              <div className="grid md:grid-cols-2 gap-4">
                 <HeaderEditor header={data.header} onChange={handleHeaderChange} />
                 <ColumnEditor columns={data.columns} onChange={handleColumnsChange} />
               </div>
-              <div>
-                <ItemsEditor 
-                  items={data.items} 
-                  columns={data.columns}
-                  onChange={handleItemsChange} 
-                />
+              
+              {/* Items Table */}
+              <ItemsEditor 
+                items={data.items} 
+                columns={data.columns}
+                onChange={handleItemsChange} 
+              />
+              
+              {/* Mobile Preview Toggle */}
+              <div className="lg:hidden mt-4">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => setShowPreview(!showPreview)}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  {showPreview ? 'Ocultar Preview' : 'Visualizar PDF'}
+                </Button>
               </div>
             </div>
+          </ScrollArea>
+        </div>
 
-            {/* Preview Panel in Config */}
-            <div className="mt-8">
-              <h3 className="text-lg font-semibold mb-4">Pré-visualização</h3>
-              <div className="flex justify-center">
-                <div className="shadow-xl border rounded-lg overflow-hidden scale-75 origin-top">
+        {/* PDF Preview Panel */}
+        {showPreview && (
+          <div className="hidden lg:flex flex-col border-l bg-muted/30 w-[45%] xl:w-[50%]">
+            <div className="p-3 border-b bg-background/50 shrink-0 flex items-center justify-between">
+              <span className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                Preview em Tempo Real
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowPreview(false)}
+              >
+                <PanelLeftClose className="h-4 w-4" />
+              </Button>
+            </div>
+            <ScrollArea className="flex-1">
+              <div className="p-4 flex justify-center">
+                <div 
+                  ref={pdfRef} 
+                  className="shadow-xl rounded-lg overflow-hidden origin-top"
+                  style={{ transform: 'scale(0.65)', transformOrigin: 'top center' }}
+                >
                   <BoletimPDF data={data} />
                 </div>
               </div>
+            </ScrollArea>
+          </div>
+        )}
+
+        {/* Mobile Preview Overlay */}
+        {showPreview && (
+          <div className="fixed inset-0 z-50 bg-background lg:hidden overflow-auto">
+            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b p-3 flex items-center justify-between">
+              <span className="text-sm font-medium">Preview do PDF</span>
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={exportToPDF} disabled={isExporting}>
+                  <FileDown className="h-4 w-4 mr-2" />
+                  {isExporting ? 'Exportando...' : 'Exportar'}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setShowPreview(false)}>
+                  Voltar
+                </Button>
+              </div>
             </div>
-          </TabsContent>
-        </Tabs>
+            <div className="p-4 flex justify-center">
+              <div 
+                ref={pdfRef} 
+                className="shadow-xl rounded-lg overflow-hidden"
+                style={{ transform: 'scale(0.5)', transformOrigin: 'top center' }}
+              >
+                <BoletimPDF data={data} />
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
