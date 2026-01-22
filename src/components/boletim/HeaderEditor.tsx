@@ -47,7 +47,7 @@ export function HeaderEditor({ header, onChange }: HeaderEditorProps) {
               type="file"
               accept="image/*"
               onChange={handleLogoUpload}
-              className="max-w-[200px]"
+              className="ml-4 cursor-pointer"
             />
           </div>
         </div>
@@ -122,8 +122,10 @@ export function HeaderEditor({ header, onChange }: HeaderEditorProps) {
           <div className="space-y-2">
             <Label htmlFor="dataEnvio">Data de Envio</Label>
             <Input
+              className="[color-scheme:light] dark:[color-scheme:dark]"
               id="dataEnvio"
               value={header.dataEnvio}
+              type='date'
               onChange={(e) => handleChange('dataEnvio', e.target.value)}
             />
           </div>
@@ -150,6 +152,7 @@ export function HeaderEditor({ header, onChange }: HeaderEditorProps) {
             <Label htmlFor="periodo">Período</Label>
             <Input
               id="periodo"
+              type='text'
               value={header.periodo}
               onChange={(e) => handleChange('periodo', e.target.value)}
             />

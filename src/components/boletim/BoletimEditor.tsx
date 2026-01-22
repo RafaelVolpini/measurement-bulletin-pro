@@ -43,20 +43,22 @@ export function BoletimEditor() {
     try {
       const element = pdfRef.current;
       const opt = {
-        margin: 10,
+        margin: 0,
         filename: `boletim_medicao_${data.header.periodo.replace(/\//g, '-')}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
           scale: 2,
           useCORS: true,
           letterRendering: true,
+          backgroundColor: '#ffffff',
+          scrollX: 0,
+          scrollY: 0,
         },
         jsPDF: { 
           unit: 'mm', 
           format: 'a4', 
           orientation: 'portrait' 
-        },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        }
       };
 
       await html2pdf().set(opt).from(element).save();
@@ -94,7 +96,7 @@ export function BoletimEditor() {
       {/* Tabs Navigation */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'config' | 'preview')} className="flex-1 flex flex-col">
         <div className="border-b bg-muted/30 px-4 lg:px-6">
-          <TabsList className="h-12 bg-transparent gap-2">
+          <TabsList className="h-12 bg-transparent flex gap-2">
             <TabsTrigger 
               value="config" 
               className="data-[state=active]:bg-background data-[state=active]:shadow-sm gap-2"
@@ -133,8 +135,10 @@ export function BoletimEditor() {
         <TabsContent value="preview" className="flex-1 m-0 overflow-hidden bg-muted/30">
           <ScrollArea className="h-[calc(100vh-8rem)]">
             <div className="p-4 lg:p-8 flex justify-center">
-              <div ref={pdfRef} className="shadow-2xl rounded-lg overflow-hidden">
-                <BoletimPDF data={data} />
+              <div className="shadow-2xl rounded-lg overflow-hidden">
+                <div ref={pdfRef}>
+                  <BoletimPDF data={data} />
+                </div>
               </div>
             </div>
           </ScrollArea>

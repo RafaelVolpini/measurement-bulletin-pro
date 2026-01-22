@@ -8,7 +8,7 @@ interface BoletimPDFProps {
   className?: string;
 }
 
-const ITEMS_PER_PAGE = 15;
+const ITEMS_PER_PAGE = 10;
 
 export function BoletimPDF({ data, className = '' }: BoletimPDFProps) {
   const { header, items, columns, assinaturas } = data;
@@ -19,8 +19,12 @@ export function BoletimPDF({ data, className = '' }: BoletimPDFProps) {
   
   // Paginate items
   const pages: typeof items[] = [];
-  for (let i = 0; i < items.length; i += ITEMS_PER_PAGE) {
-    pages.push(items.slice(i, i + ITEMS_PER_PAGE));
+  if (items.length === 0) {
+    pages.push([]);
+  } else {
+    for (let i = 0; i < items.length; i += ITEMS_PER_PAGE) {
+      pages.push(items.slice(i, i + ITEMS_PER_PAGE));
+    }
   }
 
   const renderValue = (item: typeof items[0], col: typeof columns[0]) => {
@@ -45,8 +49,9 @@ export function BoletimPDF({ data, className = '' }: BoletimPDFProps) {
       {pages.map((pageItems, pageIndex) => (
         <div 
           key={pageIndex} 
-          className="pdf-page p-6 min-h-[297mm] max-w-[210mm] mx-auto"
-          style={{ pageBreakAfter: pageIndex < pages.length - 1 ? 'always' : 'auto' }}
+          // Slightly under A4 height to avoid html2pdf/jsPDF rounding creating
+          // a trailing empty page when total height is an exact multiple.
+          className="pdf-page relative box-border w-[210mm] h-[296.5mm] mx-auto p-[10mm]"
         >
           {/* Anexo Header */}
           <div className="text-xs text-gray-600 mb-4">
@@ -139,7 +144,7 @@ export function BoletimPDF({ data, className = '' }: BoletimPDFProps) {
               ))}
               {/* Empty rows to fill the page */}
               {pageItems.length < ITEMS_PER_PAGE && pageIndex === pages.length - 1 && (
-                Array.from({ length: Math.min(5, ITEMS_PER_PAGE - pageItems.length) }).map((_, idx) => (
+                Array.from({ length: ITEMS_PER_PAGE - pageItems.length }).map((_, idx) => (
                   <tr key={`empty-${idx}`}>
                     {visibleColumns.map(col => (
                       <td key={col.id} className="h-8">&nbsp;</td>
@@ -154,7 +159,7 @@ export function BoletimPDF({ data, className = '' }: BoletimPDFProps) {
           {pageIndex === pages.length - 1 && (
             <>
               <div className="flex border-2 border-gray-400 mb-8">
-                <div className="flex-1 bg-primary text-white font-bold py-3 px-4 text-center">
+                <div className="flex-1 bg-[#D0D0D0] text-black font-bold py-3 px-4 text-center">
                   VALOR TOTAL DESTA MEDIÇÃO (R$)
                 </div>
                 <div className="w-32 bg-white text-right font-bold py-3 px-4 border-l-2 border-gray-400">

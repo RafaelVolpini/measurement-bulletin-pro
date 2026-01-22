@@ -125,14 +125,22 @@
     color: black !important;
   }
 
+  /* Only for browser printing; html2pdf handles pagination differently */
   .pdf-page {
     page-break-after: always;
-    page-break-inside: avoid;
+    break-after: page;
   }
 
   .pdf-page:last-child {
     page-break-after: auto;
+    break-after: auto;
   }
+}
+
+/* Keep table rows intact; allow the table itself to flow */
+.pdf-table tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 /* PDF Document Styles */
@@ -140,6 +148,15 @@
   font-family: 'Arial', sans-serif;
   background: white;
   color: #1a1a1a;
+}
+
+/* When exporting via html2pdf, tiny rounding errors can add an extra blank page.
+   This slight overlap removes the trailing slice without affecting appearance. */
+.pdf-document .pdf-page {
+  margin-bottom: -0.5mm;
+}
+.pdf-document .pdf-page:last-child {
+  margin-bottom: 0;
 }
 
 .pdf-table {
@@ -156,7 +173,6 @@
 }
 
 .pdf-table th {
-  background: hsl(var(--pdf-table-header));
   font-weight: 600;
   text-align: center;
 }
